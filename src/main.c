@@ -166,8 +166,8 @@ int main()
 {
     uint8_t byte[READ_FILE_BUF_SIZE] = {0};
 
-    int fd_read = open(READ_FILE_NAME, O_RDONLY);
-    int fd_write = open(WRITE_FILE_NAME, (O_CREAT | O_WRONLY), (S_IWUSR | S_IRUSR));
+    int fd_read = open(READ_FILE_NAME, O_RDONLY);   // Open With Read Only Access
+    int fd_write = open(WRITE_FILE_NAME, (O_CREAT | O_WRONLY), (S_IWUSR | S_IRUSR)); // Open with Write and Create + adding rights (to read and write by user)
 
     if (fd_read == -1)
     {
@@ -181,15 +181,15 @@ int main()
         return -1;
     }
 
-    int read_bytes = read(fd_read, byte, READ_FILE_BUF_SIZE);
     ret_t res = RET_OK;
-    while (read_bytes != 0 && res == RET_OK)                        // Process Until File is over, or we get an error
+    int read_bytes = read(fd_read, byte, READ_FILE_BUF_SIZE);       // Start Reading Files
+    while (read_bytes > 0 && res == RET_OK)                        // Process Until File is over, or we get an error
     {
         res = bit_stream_process(byte, read_bytes, fd_write);
         read_bytes = read(fd_read, byte, READ_FILE_BUF_SIZE);
     }
     bit_stream_process(byte, 0, fd_write);              // If there is still data in buffer, write it
 
-    close(fd_read);
-    close(fd_write);
+    close(fd_read);     // Close Read File Descriptor
+    close(fd_write);    // Close Write File Descriptor
 }
