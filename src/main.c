@@ -19,22 +19,24 @@
 #define LOGIC_0_VAL        0            // Logic 0 val
 #define LOGIC_1_VAL        1            // Logic 1 val
 
-/* */
-typedef enum decoded_bitstream_type_t
+/*BITSTREAM TYPE*/
+typedef enum bitstream_type_t
 {
-    DECODED_BITSTREAM_ERR     = 0, // bit0 - 0, bit1 - 0 (0x00). Unknown Situation
-    DECODED_BITSTREAM_LOGIC_0 = 1, // bit0 - 1, bit1 - 0 (0x01). Logic 0
-    DECODED_BITSTREAM_LOGIC_1 = 2, // bit0 - 0, bit1 - 1 (0x10). Logic 1
-    DECODED_BITSTREAM_SYNC    = 3, // bit0 - 1, bit1 - 1 (0x11). Sync Pulses
-    DECODED_BITSTREAM_INIT    = 4
-} decoded_bitstream_type_t;
+    BITSTREAM_TYPE_ERR     = 0, // bit0 - 0, bit1 - 0 (0x00). Unknown Situation
+    BITSTREAM_TYPE_LOGIC_0 = 1, // bit0 - 1, bit1 - 0 (0x01). Logic 0
+    BITSTREAM_TYPE_LOGIC_1 = 2, // bit0 - 0, bit1 - 1 (0x10). Logic 1
+    BITSTREAM_TYPE_SYNC    = 3, // bit0 - 1, bit1 - 1 (0x11). Sync Pulses
+    BITSTREAM_TYPE_INIT    = 4
+} bitstream_type_t;
 
+/*Return Types for user functions*/
 typedef enum ret_t
 {
     RET_OK     = 0, // Ok Return
     RET_FAIL   = 1, // Fail Return
 } ret_t;
 
+/*Finite-State-Machine For Sync Searching*/
 typedef enum fsm_state_t
 {
     FSM_STATE_FIRST_SYNC_SEARCH,
@@ -59,7 +61,7 @@ static ret_t bit_stream_process(const uint8_t* data_in, const size_t len_data_in
     static size_t decoded_bit_read_cnt = 0;    // Decoded Bit Cnt
     static size_t sync_marker_cnt = 0;         // Sync Market Cnt (Number of sync markers found)
     static size_t frame_byte_written = 0;      // Number of bytes written/found at current frame
-    static decoded_bitstream_type_t last_bitstream_type = DECODED_BITSTREAM_INIT;     // Last BitStream Type. Using to skip repeating bits during parsing
+    static bitstream_type_t last_bitstream_type = BITSTREAM_TYPE_INIT;     // Last BitStream Type. Using to skip repeating bits during parsing
     ret_t ret = RET_FAIL;
 
     if (data_in == NULL)
@@ -70,16 +72,16 @@ static ret_t bit_stream_process(const uint8_t* data_in, const size_t len_data_in
 
     for (size_t i = 0; i < len_data_in; i++)
     {
-        const decoded_bitstream_type_t cur_bitstream_type = data_in[i] & BYTE_CHANNEL_MASK;   // Get Coded Values of 0 and 1 Channels
+        const bitstream_type_t cur_bitstream_type = data_in[i] & BYTE_CHANNEL_MASK;   // Get Coded Values of 0 and 1 Channels
         if (last_bitstream_type != cur_bitstream_type)  // Skip repeating bits
         {
             switch (cur_bitstream_type)
             {
-                case DECODED_BITSTREAM_LOGIC_0:
-                case DECODED_BITSTREAM_LOGIC_1:
-                    if (last_bitstream_type == DECODED_BITSTREAM_SYNC)        // Checking if before payload, was sync pulses
+                case BITSTREAM_TYPE_LOGIC_0:
+                case BITSTREAM_TYPE_LOGIC_1:
+                    if (last_bitstream_type == BITSTREAM_TYPE_SYNC)        // Checking if before payload, was sync pulses
                     {
-                        uint8_t decoded_bit_val = (cur_bitstream_type == DECODED_BITSTREAM_LOGIC_0) ? LOGIC_0_VAL : LOGIC_1_VAL;   // Decode Date from 0 and 1 Channels
+                        uint8_t decoded_bit_val = (cur_bitstream_type == BITSTREAM_TYPE_LOGIC_0) ? LOGIC_0_VAL : LOGIC_1_VAL;   // Decode Date from 0 and 1 Channels
                         decode_dword_val = (decode_dword_val << 1) | decoded_bit_val;   // Fill Dword Value
                         if (FSM_STATE_FIRST_SYNC_SEARCH == fsm_state)       // During First Sync Search, Just Find the Sync Marker w/o writing
                         {
@@ -123,7 +125,7 @@ static ret_t bit_stream_process(const uint8_t* data_in, const size_t len_data_in
                                     ret = RET_OK;
                                 }
                             }
-                            else // OtherWise Just Cnt Readed Bits to write further
+                            else // OtherWise Just count readed Bits to write further
                             {
                                 decoded_bit_read_cnt++;
                                 ret = RET_OK;
@@ -132,7 +134,7 @@ static ret_t bit_stream_process(const uint8_t* data_in, const size_t len_data_in
                         last_bitstream_type = cur_bitstream_type;
                     }
                     break;
-                case DECODED_BITSTREAM_SYNC:
+                case BITSTREAM_TYPE_SYNC:
                     if (last_bitstream_type != cur_bitstream_type)
                     {
                         last_bitstream_type = cur_bitstream_type;
