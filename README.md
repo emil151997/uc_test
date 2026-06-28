@@ -25,4 +25,4 @@ C-Written Program to parse Telemetry Information from Binary File
 To build the program, you can use a script `build.sh` (with executing rights) from project directory or just execute `make clean && make` in console.
 
 ### Run
-To run the program, you can use a script `run.sh`(with executing rights) from project directory or just execute `./uc_test` in console
+To run the program, you can use a script `run.sh`(with executing rights) from project directory or just execute `./uc_test` in console. Please make sure that the udk_dump.bin file is in the same directory as the executable file.
