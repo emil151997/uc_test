@@ -8,9 +8,8 @@
 #define MAX_FRAME_SIZE 2048
 #define LOGIC_0_VAL 0
 #define LOGIC_1_VAL 1
-const uint32_t sync_marker = 0x1ACFFC1D;
 
-//const uint8_t sync_marker[4] = {0x1A, 0xCF, 0xFC, 0x1D};
+const uint32_t sync_marker = 0x1ACFFC1D;
 
 size_t cur_packet_size = 0;
 uint8_t byte[240000001] ={0};
@@ -60,19 +59,18 @@ static int bit_stream_process(const uint8_t* byte_stream, const size_t byte_stre
                         {
                             if (cur_frame_val == sync_marker)
                             {
-                                printf("Found First sync marker %ld. Start Frame %d\n", cnt - last_pos, frame_cnt);
+                                printf("Found First sync marker %ld. Start Frame %ld\n", cnt - last_pos, frame_cnt);
                                 last_pos = cnt;
                                 int res_write = write(fd_write, &cur_frame_val, sizeof(cur_frame_val));
                                 frame_ptr = 0;
                                 fsm_state = FSM_STATE_NEXT_SYNC_SEARCH;
-                                frame_cnt++;
                             }
                         }
                         else if (fsm_state == FSM_STATE_NEXT_SYNC_SEARCH)
                         {
                             if (cur_frame_val == sync_marker)
                             {
-                                printf("Found Next sync marker. Frame Num[%ld] Size [%ld]\n", frame_cnt, cnt - last_pos);
+                                printf("Found Next sync marker. Frame Done Num[%ld] Size [%ld]\n", frame_cnt, cnt - last_pos);
                                 last_pos = cnt;
                                 fsm_state = FSM_STATE_NEXT_SYNC_SEARCH;
                                 int res_write = write(fd_write, &cur_frame_val, sizeof(cur_frame_val));
@@ -88,6 +86,7 @@ static int bit_stream_process(const uint8_t* byte_stream, const size_t byte_stre
                         }
                         last_bit_val = cur_bit_val;
                     }
+                    else fsm_state = FSM_STATE_FIRST_SYNC_SEARCH;
                     break;
                 case INFO_BITSTREAM_SYNC:
                     if (last_bit_val != cur_bit_val)
@@ -101,6 +100,7 @@ static int bit_stream_process(const uint8_t* byte_stream, const size_t byte_stre
         }
         cnt++;
     }
+    //printf("Read %ld bytes\n", cnt);
 }
 
 
@@ -119,6 +119,7 @@ int main()
     if (fd_write == -1)
     {
         printf("Error Open Write File\n");
+        close(fd_read);
         return -1;
     }
 
