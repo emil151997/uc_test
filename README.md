@@ -8,7 +8,7 @@ C-Written Program to parse Telemetry Information from Binary File
 - Step 2. Find First sync marker
 - Step 3. If Wound, Start Writing to File From Sync Market
 - Step 4. Search For Next Sync Marker. 
-- Step 5. If Found, Calculate Frame Size and Repeat Step 3-5. Otherwise, Step 6
+- Step 5. If Found, Calculate Frame Size (shown in console, count from 0) and Repeat Step 3-5. Otherwise, Step 6
 - Step 6. Write to File Last Bytes
 - Step 7. Close Both Files
 
